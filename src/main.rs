@@ -1,3 +1,4 @@
+use futures::future::join_all;
 use futures::TryStreamExt;
 use rdkafka::config::ClientConfig;
 use rdkafka::consumer::stream_consumer::StreamConsumer;
@@ -39,11 +40,16 @@ async fn main() {
     // 日志
     tracing_subscriber::fmt().init();
 
+    let mut job_vec = Vec::new();
+
     let config = CustomConsumerConfig {
         bootstrap_server: "".to_string(),
         topic: vec![""],
         group_id: "my_group".to_string(),
         auto_offset_reset: "earliest".to_string(),
     };
-    tokio::spawn(subscribe_job(config));
+    let consumer1 = tokio::spawn(subscribe_job(config));
+    job_vec.push(consumer1);
+
+    let _ = join_all(job_vec).await;
 }
